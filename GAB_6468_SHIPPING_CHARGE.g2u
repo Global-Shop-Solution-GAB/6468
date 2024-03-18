@@ -1,0 +1,175 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.Try
+	'Hook 28532
+	f.ODBC.Connection!con.opencompanyconnection(90)
+	V.Local.sShipViaCode.Declare
+	v.Local.sShipV.Declare
+	v.Local.sShipToN.Declare
+	v.Local.sShipToA1.Declare
+	v.Local.sShipToA2.Declare
+	v.Local.sShipToA3.Declare
+	v.Local.sShipToA4.Declare
+	v.Local.sShipToA5.Declare
+	v.Local.sShipCity.Declare
+	v.Local.sShipState.Declare
+	v.Local.sShipZip.Declare
+	v.Local.sShipCntry.Declare
+	v.Local.sShipAttn.Declare
+	v.Local.sShipPhone.Declare
+	v.Local.sShipContact.Declare
+	v.Local.sShipEmail.Declare
+	v.Local.sTrackNo.Declare
+	v.Local.sCustPO.Declare
+	v.Local.sShipNo.Declare
+	v.Local.sOrderNo.Declare
+	v.Local.sOrderSeq.Declare
+	v.Local.sCustomer.Declare
+	v.Local.sReadRow.Declare
+	v.Local.sTemp.Declare
+	v.Local.sPartNo.Declare
+	v.Local.sPartDesc.Declare
+	v.Local.sValues.Declare
+	v.Local.sRet.Declare
+	v.Local.sAccessKey.Declare
+	v.Local.sHeadFormat.Declare
+	V.Local.sProducts.Declare
+	v.Local.sFreight.Declare
+	v.Local.sSql.Declare
+	v.Local.sParam.Declare
+	v.Local.sID.Declare
+	
+	V.Local.iRowCount.Declare
+	v.Local.i.Declare
+	v.Local.iLen.Declare
+	v.Local.iRet.Declare
+	v.Local.fShippedQty.Declare
+	
+	v.Local.sOrderNo.Set(v.Passed.FIRST-ORDER)
+	v.Local.sShipToN.Set(v.Passed.000112)
+	V.Local.sShipToA1.Set(V.Passed.000114)
+	V.Local.sShipToA2.Set(V.Passed.000118)
+	V.Local.sShipToA3.Set(V.Passed.000120)
+	V.Local.sShipToA4.Set(V.Passed.000122)
+	V.Local.sShipToA5.Set(V.Passed.000124)
+	V.Local.sShipCity.Set(v.Passed.000129)
+	v.Local.sShipState.Set(v.Passed.000130)
+	v.Local.sShipZip.Set(v.Passed.000131)
+	v.Local.sShipCntry.Set(v.Passed.000133)
+	v.Local.sShipAttn.Set(v.Passed.000154)
+	v.Local.sCustPO.Set(v.Passed.000328)
+	v.Local.sShipNo.Set(v.Passed.000168)
+	V.Local.sShipPhone.Set(v.Passed.000363)
+	v.Local.sShipContact.Set(v.Passed.000360)
+	v.Local.sShipEmail.Set(v.Passed.000367)
+	
+	F.Intrinsic.String.Build("select BUY_GRP_CUST_NO from V_ORDER_HEADER WHERE Order_no='{0}'",v.Local.sOrderNo,v.Local.sSql)
+	f.ODBC.Connection!con.executeandreturn(v.Local.sSql,v.Local.sCustomer)
+	
+	'If no buying group, then pull customernumber
+	f.Intrinsic.Control.If(V.Local.sCustomer.Trim,=,"")
+		F.Intrinsic.String.Build("select CUSTOMER from V_ORDER_HEADER WHERE Order_no='{0}'",v.Local.sOrderNo,v.Local.sSql)
+		f.ODBC.Connection!con.executeandreturn(v.Local.sSql,v.Local.sCustomer)
+	f.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.SelectCase(V.Local.sCustomer.Trim)
+		F.Intrinsic.Control.Case("3550")
+			'iDEAL
+			f.Intrinsic.Control.CallSub(CalculationFreight,"OrderNo",v.Local.sOrderNo,"Message","Order sum is less than $250 for Ideal, adding $10 Freight","Limit",250,"Freight",10)
+		F.Intrinsic.Control.Case("6130")
+			'JA Russell
+			f.Intrinsic.Control.CallSub(CalculationFreight,"OrderNo",v.Local.sOrderNo,"Message","Order sum is less than $250 for JA Russell, adding $10 Freight","Limit",250,"Freight",10)
+		F.Intrinsic.Control.Case("1630")
+			'CORYS
+			f.Intrinsic.Control.CallSub(CalculationFreight,"OrderNo",v.Local.sOrderNo,"Message","Order sum is less than $500 for Corys, adding $7 Freight","Limit",500,"Freight",7)
+		f.Intrinsic.Control.CaseElse
+			'Everyone else
+			f.Intrinsic.Control.CallSub(CalculationFreight,"OrderNo",v.Local.sOrderNo,"Message","Order sum is less than $500, adding $10 Freight","Limit",500,"Freight",10)
+	F.Intrinsic.Control.EndSelect
+	
+	f.ODBC.Connection!con.Close
+	f.Intrinsic.Control.End
+	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+	f.ODBC.Connection!con.Close
+	f.Intrinsic.Control.End
+f.Intrinsic.Control.EndTry
+
+Program.Sub.Main.End
+
+Program.Sub.CalculationFreight.Start
+f.Intrinsic.Control.Try
+	v.Local.sShipV.Declare
+	v.Local.fret1.Declare
+	v.Local.fRet2.Declare
+	v.Local.fRet3.Declare
+	v.Local.fExtn.Declare
+	v.Local.fExtnH.Declare
+	v.Local.fLimit.Declare
+	v.Local.fFreight.Declare
+	v.Local.ssql.Declare
+	v.Local.sOrderNo.Declare
+	v.Local.sOrderSeq.Declare
+	v.Local.sFreight.Declare
+	v.Local.sParam.Declare
+	v.Local.sMsg.Declare
+	v.Local.fCost.Declare
+	
+	v.Local.sOrderSeq.Set(v.Passed.FIRST-SEQ)
+	v.Local.sShipV.Set(v.Passed.000180)
+	v.Local.sOrderNo.Set(v.Args.OrderNo)
+	v.Local.sMsg.Set(v.Args.Message) '"Order sum is less than $250 for JA Russell, adding $10 Freight"
+	v.Local.fLimit.Set(v.Args.Limit) '250
+	v.Local.fFreight.Set(v.Args.Freight) '10
+	
+	f.Intrinsic.Control.If(v.Local.sShipV.trim,<>,"CUST. COLLECTION")
+	
+		'Checking to see if the user has entered in a freight cost already (save it to enter it back in later)
+		F.Intrinsic.String.Build("select ifnull(COST,0) from V_SHIPMENT_LINES WHERE Order_no = '{0}' AND ORDER_SUFFIX = '{1}' AND ORDER_REC='8000' ",v.Local.sOrderNo,V.Local.sOrderSeq,v.Local.sSql)
+		F.ODBC.Connection!CON.executeandreturn(v.Local.sSql,v.Local.fCost)
+	
+		'DETERMINE IF THERE IS A FREIGHT CHARGE ALREADY.
+		F.Intrinsic.String.Build("select ifnull(PRICE,0) from V_ORDER_LINES WHERE Order_no='{0}' AND RECORD_NO='8000'",v.Local.sOrderNo,v.Local.sSql)
+		F.ODBC.Connection!CON.executeandreturn(v.Local.sSql,v.Local.fRet1)
+		
+		F.Intrinsic.String.Build("select ifnull(PRICE,0) from V_SHIPMENT_LINES WHERE Order_no='{0}' AND ORDER_REC='8000'",v.Local.sOrderNo,v.Local.sSql)
+		F.ODBC.Connection!CON.executeandreturn(v.Local.sSql,v.Local.fRet2)
+		
+		F.Intrinsic.String.Build("select ifnull(PRICE,0) from V_ORDER_HIST_LINE WHERE Order_no='{0}' AND ORDER_LINE='8000'",v.Local.sOrderNo,v.Local.sSql)
+		F.ODBC.Connection!CON.executeandreturn(v.Local.sSql,v.Local.fRet3)
+		
+		f.Intrinsic.Control.If(v.Local.fRet1.Trim,=,0)
+		F.Intrinsic.Control.AndIf(v.Local.fRet2,=,0)
+		f.Intrinsic.Control.AndIf(v.Local.fRet3,=,0)
+		'Only charge freight if its the first shipment on an order -SS 8/25/22
+		F.Intrinsic.Control.AndIf(v.Local.sOrderSeq,=,"0000")
+			'Determine if over the dollar limit
+			f.Intrinsic.String.Build("SELECT SUM(EXTENSION) FROM V_ORDER_LINES WHERE ORDER_NO='{0}'",V.Local.sOrderNo,v.Local.sSql)
+			f.ODBC.Connection!con.executeandreturn(v.Local.sSql,v.local.fExtn)
+			f.Intrinsic.String.Build("Select SUM(EXTENSION) from ORDER_HIST_LINE WHERE ORDER_NO='{0}' AND ORDER_LINE<>'8000'",V.Local.sOrderNo,v.Local.sSql)
+			f.ODBC.Connection!con.executeandreturn(v.Local.sSql,v.local.fExtnH)
+			F.Intrinsic.Math.Add(v.Local.fExtn,v.Local.fExtnH,v.Local.fExtn)
+			
+			f.Intrinsic.Control.If(v.Local.fExtn,<,v.Local.fLimit)
+				F.Intrinsic.UI.InvokeWaitDialog(v.Local.sMsg)
+				F.Intrinsic.String.Split(v.Local.fFreight, ".", v.Local.sFreight)
+				V.Local.sFreight.RedimPreserve(0,1)
+				F.Intrinsic.String.RPad(v.Local.sFreight(1), "0", 2,v.Local.sFreight(1))
+				F.Intrinsic.String.LPad(v.Local.sFreight(0), "0", 10, v.Local.sFreight(0))
+				f.Intrinsic.String.Build("{0}{1}", v.Local.sFreight(0), v.Local.sFreight(1), v.Local.sFreight(0))
+				F.Intrinsic.String.Build("{0}{1}{2}{3}{3}Y", v.Caller.CompanyCode, v.local.sOrderNo, v.Local.sOrderSeq, v.Local.sFreight(0), v.Local.sParam)
+				F.Intrinsic.Task.LaunchGSSSync("ORD1FRTV", "-c", v.Local.sParam)
+				
+				F.Intrinsic.String.Build("Update SHIPMENT_LINES Set COST = '{2}' WHERE Order_no='{0}' AND ORDER_SUFFIX = '{1}' AND ORDER_REC='8000' ",v.Local.sOrderNo,V.Local.sOrderSeq,V.Local.fCost,v.Local.sSql)
+				F.ODBC.Connection!CON.execute(v.Local.sSql)
+				
+			f.Intrinsic.Control.endif
+		f.Intrinsic.Control.EndIf
+	f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.Catch
+
+f.Intrinsic.Control.EndTry
+Program.Sub.CalculationFreight.End
